@@ -13,7 +13,7 @@ class AlunniController
   }
 
   public function search(Request $request, Response $response, $args) {
-    $mysqli_connection = new MySQLi('my_mariadb', 'root', 'ciccio', 'scuola');
+    $db = Db::getIstance();
 
     $queryParams = $request->getQueryParams();
     $nome = $queryParams['nome'] ?? null;
@@ -29,7 +29,7 @@ class AlunniController
     $allowed_columns = ['id', 'nome', 'cognome', 'eta']; // Aggiungi tutte le colonne consentite
     $sort_per = in_array($sort_per, $allowed_columns) ? $sort_per : 'id'; // Default a 'id' se non valido
 
-    $sql = "SELECT * FROM alunni WHERE 1=1";
+    $sql = "";
     $params = [];
     $types = '';
 
@@ -50,15 +50,12 @@ class AlunniController
         $sql .= " ORDER BY $sort_per $sort_dir";
     }
 
-    $stmt = $mysqli_connection->prepare($sql);
-
     if (!empty($params)) {
         $stmt->bind_param($types, ...$params);
     }
 
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $results = $result->fetch_all(MYSQLI_ASSOC);
+    // Esecuzione della query
+    $result = $db->executeQuery($sql, $params, $types);
 
     $response->getBody()->write(json_encode($results));
     return $response->withHeader("Content-type", "application/json")->withStatus(200);

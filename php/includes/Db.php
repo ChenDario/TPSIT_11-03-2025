@@ -20,5 +20,13 @@
             }
             return [];
         }
+
+        public function sort($table, $where){
+            $query = "SELECT * FROM $table WHERE 1 = 1 AND $where";
+            if($result = $this->query($query)){
+                return $result->fetch_all(MYSQLI_ASSOC);
+            }
+            return [];
+        }
     }
 ?>

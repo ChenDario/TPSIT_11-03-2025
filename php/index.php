@@ -8,9 +8,9 @@
     $app = AppFactory::create();
 
     //                  Chi deve gestire la richiesta e buttare fuori la risposta
-    $app->get('/alunni', "AlunniController:index");
+    //$app->get('/alunni', "AlunniController:index");
     //curl http://localhost:8080/alunni/1
-    //$app->get('/alunni', "AlunniController:search");
+    $app->get('/alunni', "AlunniController:search");
     //curl -X POST http://localhost:8080/alunni -H "Content-Type: application/json" -d '{"nome": "Dario","cognome": "Chen"}'
     $app->post('/alunni', "AlunniController:create");
     //curl -X PUT http://localhost:8080/alunni/3 -H "Content-Type: application/json" -d '{"nome": "Ruji"}'
