@@ -19,47 +19,39 @@ class AlunniController
     $nome = $queryParams['nome'] ?? null;
     $cognome = $queryParams['cognome'] ?? null;
     $sort = $queryParams['sort'] ?? null;
-    $sort_per = $queryParams['sort_per'] ?? null;
-    $sort_dir = isset($queryParams['sort_dir']) ? $queryParams['sort_dir'] : 'ASC';
+    $sort_per = $queryParams['sort_per'] ?? 'id';  // Default a 'id' se non specificato
+    $sort_dir = isset($queryParams['sort_dir']) ? strtoupper($queryParams['sort_dir']) : 'ASC';
 
-    // Validazione di sort_dir (solo ASC o DESC)
-    $sort_dir = strtoupper($sort_dir) === 'DESC' ? 'DESC' : 'ASC';
+    // Validazione parametri di ordinamento
+    $sort_dir = ($sort_dir === 'DESC') ? 'DESC' : 'ASC';
+    $allowed_columns = ['id', 'nome', 'cognome', 'eta'];
+    $sort_per = in_array($sort_per, $allowed_columns) ? $sort_per : 'id';
 
-    // Whitelist delle colonne permesse per l'ordinamento
-    $allowed_columns = ['id', 'nome', 'cognome', 'eta']; // Aggiungi tutte le colonne consentite
-    $sort_per = in_array($sort_per, $allowed_columns) ? $sort_per : 'id'; // Default a 'id' se non valido
-
-    $sql = "";
+    // Costruzione della condizione WHERE
+    $conditions = [];
     $params = [];
-    $types = '';
 
     if (!empty($nome)) {
-        $sql .= " AND nome LIKE ?";
-        $params[] = "%" . $nome . "%";
-        $types .= 's';
+        $conditions[] = "nome LIKE '%" . $this->real_escape_string($nome) . "%'";
     }
 
     if (!empty($cognome)) {
-        $sql .= " AND cognome LIKE ?";
-        $params[] = "%" . $cognome . "%";
-        $types .= 's';
+        $conditions[] = "cognome LIKE '%" . $this->real_escape_string($cognome) . "%'";
     }
 
-    // Aggiungi ORDER BY solo se richiesto (usando direttamente $sort_per e $sort_dir, già validati)
-    if ($sort && $sort_per) {
-        $sql .= " ORDER BY $sort_per $sort_dir";
+    $where = !empty($conditions) ? implode(' AND ', $conditions) : '1';
+
+    // Aggiungi ordinamento se richiesto
+    if ($sort) {
+        $where .= " ORDER BY $sort_per $sort_dir";
     }
 
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
+    // Esegui la query usando il metodo sort()
+    $result = $db->sort('alunni', $where);
 
-    // Esecuzione della query
-    $result = $db->executeQuery($sql, $params, $types);
-
-    $response->getBody()->write(json_encode($results));
+    $response->getBody()->write(json_encode($result));
     return $response->withHeader("Content-type", "application/json")->withStatus(200);
-  }
+}
 
   public function show(Request $request, Response $response, $args){
      // $queryParams = $request->getQueryParams();
